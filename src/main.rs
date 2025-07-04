@@ -1,11 +1,21 @@
 use std::{collections::HashMap, path::Path};
 
+use crate::hotkey::setup_hotkey;
+
+mod hotkey;
 mod indexer;
 mod launcher;
 
 fn main() {
     let applications: HashMap<String, String> = indexer::get_applications();
+    // run(&applications);
+    setup_hotkey(move || {
+        run(&applications);
+    })
+    .unwrap()
+}
 
+fn run(applications: &HashMap<String, String>) {
     println_applications(&applications);
     let app_name = user_io();
 

@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 parselnk = "0.1.1"
 walkdir = "2"
+windows-hotkeys = "0.2.1"
