@@ -5,10 +5,11 @@ use crate::hotkey::setup_hotkey;
 mod hotkey;
 mod indexer;
 mod launcher;
+mod search;
 
 fn main() {
     let applications: HashMap<String, String> = indexer::get_applications();
-    // run(&applications);
+    // // run(&applications);
     setup_hotkey(move || {
         run(&applications);
     })
@@ -17,7 +18,20 @@ fn main() {
 
 fn run(applications: &HashMap<String, String>) {
     println_applications(&applications);
-    let app_name = user_io();
+    let mut app_name = user_io();
+
+    let apps_name = applications.keys().cloned().collect::<Vec<String>>();
+
+    let matches = search::search(&app_name, &apps_name);
+
+    println!("Search results for '{}': {:?}", app_name, matches);
+
+    app_name = if matches.is_empty() {
+        println!("No matches found. Please enter a valid application name:");
+        user_io()
+    } else {
+        matches[0].to_string()
+    };
 
     if let Some(exec_path) = applications.get(&app_name) {
         launcher::launch_application(Path::new(exec_path));
