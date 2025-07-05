@@ -1,22 +1,23 @@
-use std::{collections::HashMap, path::Path};
+use std::collections::HashMap;
 
-use crate::hotkey::setup_hotkey;
+use crate::{hotkey::setup_hotkey, model::ApplicationInformation};
 
 mod hotkey;
 mod indexer;
 mod launcher;
+mod model;
 mod search;
 
 fn main() {
-    let applications: HashMap<String, String> = indexer::get_applications();
-    // // run(&applications);
-    setup_hotkey(move || {
-        run(&applications);
-    })
-    .unwrap()
+    let applications: HashMap<String, ApplicationInformation> = indexer::get_applications();
+    run(&applications);
+    // setup_hotkey(move || {
+    //     run(&applications);
+    // })
+    // .unwrap()
 }
 
-fn run(applications: &HashMap<String, String>) {
+fn run(applications: &HashMap<String, ApplicationInformation>) {
     println_applications(&applications);
     let mut app_name = user_io();
 
@@ -33,8 +34,9 @@ fn run(applications: &HashMap<String, String>) {
         matches[0].to_string()
     };
 
-    if let Some(exec_path) = applications.get(&app_name) {
-        launcher::launch_application(Path::new(exec_path));
+    if let Some(app) = applications.get(&app_name) {
+        let child = launcher::launch_application(app);
+        println!("Process started {:?}", child);
     } else {
         eprintln!("Application not found: {}", app_name);
     }
@@ -48,7 +50,7 @@ fn user_io() -> String {
     app_name.trim().to_string()
 }
 
-fn println_applications(applications: &HashMap<String, String>) {
+fn println_applications(applications: &HashMap<String, ApplicationInformation>) {
     for (name, _) in applications {
         println!("{}", name);
     }
