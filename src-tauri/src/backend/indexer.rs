@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path};
 use parselnk::Lnk;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::model::ApplicationInformation;
+use crate::backend::model::ApplicationInformation;
 
 pub fn get_applications() -> std::collections::HashMap<String, ApplicationInformation> {
     let mut applications: HashMap<String, ApplicationInformation> = HashMap::new();

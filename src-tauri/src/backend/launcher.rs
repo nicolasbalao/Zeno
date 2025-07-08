@@ -4,7 +4,7 @@ use std::{
     process::{Child, Command},
 };
 
-use crate::model::ApplicationInformation;
+use crate::backend::model::ApplicationInformation;
 
 pub fn launch_application(app: &ApplicationInformation) -> io::Result<Child> {
     let exec_path_str = Path::new(&app.exec_path).to_str().expect("Invalid path");
