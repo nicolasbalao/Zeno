@@ -1,5 +1,10 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+};
+
 use crate::backend::{indexer::get_applications, launcher::launch_application, search::search};
 
 mod backend;
@@ -62,9 +67,28 @@ pub fn run() {
                 )?;
                 app.global_shortcut().register(ctrl_n_shortcut)?;
             }
+
+            // Sys tray
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&quit_i])?;
+
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .show_menu_on_left_click(true)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        println!("quit menu item was clicked");
+                        app.exit(0);
+                    }
+                    _ => {
+                        println!("menu item {:?} not handled", event.id);
+                    }
+                })
+                .build(app)?;
+
             Ok(())
         })
-        // .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_applications_names,
