@@ -3,6 +3,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
+    AppHandle, Manager,
 };
 
 use crate::backend::{indexer::get_applications, launcher::launch_application, search::search};
@@ -36,36 +37,49 @@ fn launch_application_cmd(name: &str) {
     launch_application(application).unwrap();
 }
 
+fn show_main_window(app: AppHandle) {
+    if let Some(window) = app.get_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+fn hide_main_window(app: AppHandle) {
+    if let Some(window) = app.get_window("main") {
+        let _ = window.hide();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             #[cfg(desktop)]
             {
-                use tauri_plugin_global_shortcut::{
-                    Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
-                };
+                use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
                 let ctrl_n_shortcut = Shortcut::new(Some(Modifiers::CONTROL), Code::KeyN);
+                let escp_shortcut = Shortcut::new(None, Code::Escape);
                 app.handle().plugin(
                     tauri_plugin_global_shortcut::Builder::new()
-                        .with_handler(move |_app, shortcut, event| {
-                            println!("{:?}", shortcut);
+                        .with_handler(move |_app, shortcut, _| match shortcut {
+                            s if s == &ctrl_n_shortcut => {
+                                let app_handle = _app.app_handle().clone();
 
-                            if shortcut == &ctrl_n_shortcut {
-                                match event.state() {
-                                    ShortcutState::Pressed => {
-                                        println!("CTRL + N pressed");
-                                    }
-                                    ShortcutState::Released => {
-                                        println!("CTRL + N Released !");
-                                    }
-                                }
+                                show_main_window(app_handle);
+                            }
+                            s if s == &escp_shortcut => {
+                                let app_handle = _app.app_handle().app_handle().clone();
+                                hide_main_window(app_handle);
+                            }
+                            _ => {
+                                println!("Unhandled")
                             }
                         })
                         .build(),
                 )?;
                 app.global_shortcut().register(ctrl_n_shortcut)?;
+                app.global_shortcut().register(escp_shortcut)?;
             }
 
             // Sys tray
