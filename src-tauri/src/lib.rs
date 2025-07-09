@@ -1,32 +1,62 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+use std::sync::Mutex;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Manager,
+    AppHandle, Manager, State,
 };
 
-use crate::backend::{indexer::get_applications, launcher::launch_application, search::search};
+use crate::backend::{
+    indexer::get_applications, launcher::launch_application, model::ApplicationInformation,
+    search::search,
+};
 
 mod backend;
 
-#[tauri::command]
-fn get_applications_names() -> Vec<String> {
-    let applications = get_applications();
-
-    applications
-        .keys()
-        .into_iter()
-        .map(|app| app.clone())
-        .collect::<Vec<String>>()
+#[derive(Debug, Default)]
+struct AppState {
+    applications: Vec<ApplicationInformation>,
 }
 
 #[tauri::command]
-fn search_application(name: &str, application_names: Vec<String>) -> Vec<String> {
-    search(name, &application_names)
+fn get_applications_names(state: State<'_, Mutex<AppState>>) -> Vec<ApplicationInformation> {
+    let applications = get_applications();
+
+    let applications = applications
+        .values()
+        .into_iter()
+        .map(|app| app.clone())
+        .collect::<Vec<ApplicationInformation>>();
+
+    {
+        let mut app_state = state.lock().unwrap();
+        app_state.applications = applications.clone();
+    }
+
+    applications
+}
+
+#[tauri::command]
+fn search_application(
+    name: &str,
+    state: State<'_, Mutex<AppState>>,
+) -> Vec<ApplicationInformation> {
+    let app_state = state.lock().unwrap();
+    let applications: Vec<ApplicationInformation> = app_state
+        .applications
         .iter()
-        .map(|name| name.to_string())
-        .collect::<Vec<String>>()
+        .map(|app| app.clone())
+        .collect();
+
+    // drop(app_state);
+
+    if name.is_empty() {
+        return applications.clone();
+    }
+
+    search(name, applications)
 }
 
 #[tauri::command]
@@ -54,6 +84,7 @@ fn hide_main_window(app: AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            app.manage(Mutex::new(AppState::default()));
             #[cfg(desktop)]
             {
                 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
@@ -92,7 +123,6 @@ pub fn run() {
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
-                        println!("quit menu item was clicked");
                         app.exit(0);
                     }
                     _ => {

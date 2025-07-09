@@ -2,7 +2,11 @@
 import { onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 
-const apps = ref([]);
+type Application = {
+  name: string;
+};
+
+const apps = ref<Application[]>([]);
 
 async function getApps() {
   // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -45,7 +49,9 @@ onMounted(() => {
       />
     </div>
     <ul>
-      <li v-for="app in apps" @click="onClickApplication(app)">{{ app }}</li>
+      <li v-for="app in apps" @click="onClickApplication(app.name)">
+        {{ app.name }}
+      </li>
     </ul>
   </main>
 </template>

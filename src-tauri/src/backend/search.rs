@@ -3,7 +3,18 @@ use nucleo_matcher::{
     Config, Matcher,
 };
 
-pub fn search<'a>(app_name: &str, applications_name: &'a Vec<String>) -> Vec<&'a str> {
+use crate::backend::model::ApplicationInformation;
+
+// TODO refactor
+pub fn search(
+    app_name: &str,
+    applications: Vec<ApplicationInformation>,
+) -> Vec<ApplicationInformation> {
+    let applications_name = applications
+        .iter()
+        .map(|app| app.name.clone())
+        .collect::<Vec<String>>();
+
     let mut matcher = Matcher::new(Config::DEFAULT);
     let matches = Pattern::new(
         app_name,
@@ -11,7 +22,14 @@ pub fn search<'a>(app_name: &str, applications_name: &'a Vec<String>) -> Vec<&'a
         Normalization::Smart,
         AtomKind::Fuzzy,
     )
-    .match_list(applications_name, &mut matcher);
+    .match_list(applications_name, &mut matcher)
+    .iter()
+    .map(|result| result.0.clone())
+    .collect::<Vec<String>>();
 
-    matches.iter().map(|(s, _)| s.as_str()).collect()
+    matches
+        .iter()
+        .map(|app_name| applications.iter().find(|app| app.name == app_name.clone()))
+        .map(|app_filter| app_filter.unwrap().clone())
+        .collect::<Vec<ApplicationInformation>>()
 }

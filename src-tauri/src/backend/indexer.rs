@@ -52,9 +52,6 @@ fn extract_application_data(path: &Path) -> HashMap<String, ApplicationInformati
         .iter()
         .filter_map(|file| {
             let lnk = Lnk::try_from(file.path()).ok()?;
-            if file.file_name().to_str().unwrap().contains("Discord") {
-                println!("{:?}", lnk.string_data)
-            }
 
             let exec_path = lnk.link_info.local_base_path?;
             let application_name = file.path().file_stem()?.to_str().unwrap().to_string();

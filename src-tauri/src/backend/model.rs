@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct ApplicationInformation {
     pub name: String,
     pub exec_path: String,
