@@ -1,6 +1,6 @@
 use nucleo_matcher::{
-    Config, Matcher,
     pattern::{AtomKind, CaseMatching, Normalization, Pattern},
+    Config, Matcher,
 };
 
 pub fn search<'a>(app_name: &str, applications_name: &'a Vec<String>) -> Vec<&'a str> {
