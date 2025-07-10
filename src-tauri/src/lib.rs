@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-use std::sync::Mutex;
+use std::
+    sync::{Mutex, OnceLock}
+;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -50,8 +52,6 @@ fn search_application(
         .map(|app| app.clone())
         .collect();
 
-    // drop(app_state);
-
     if name.is_empty() {
         return applications.clone();
     }
@@ -65,6 +65,10 @@ fn launch_application_cmd(name: &str) {
     let application = applications.get(name).unwrap();
 
     launch_application(application).unwrap();
+
+    let app_handle = app_handle();
+
+    hide_main_window(app_handle.clone());
 }
 
 fn show_main_window(app: AppHandle) {
@@ -80,11 +84,20 @@ fn hide_main_window(app: AppHandle) {
     }
 }
 
+static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
+
+fn app_handle<'a>() -> &'a AppHandle {
+    APP_HANDLE.get().unwrap()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
+
+            APP_HANDLE.set(app.app_handle().to_owned()).unwrap();
+
             #[cfg(desktop)]
             {
                 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
